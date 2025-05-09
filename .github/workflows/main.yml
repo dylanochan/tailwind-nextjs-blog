@@ -1,0 +1,46 @@
+name: Build and Deploy Yarn Project
+
+# 触发条件：当代码推送到 main 分支时触发
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # 支持手动触发
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 虚拟机
+
+    steps:
+      # 步骤 1：检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 步骤 2：设置 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # 根据项目需要选择 Node.js 版本
+          cache: 'yarn' # 缓存 Yarn 依赖以加速构建
+
+      # 步骤 3：安装 Yarn 依赖
+      - name: Install dependencies
+        run: yarn install
+
+      # 步骤 4：构建项目
+      - name: Build static site
+        run: EXPORT=1 UNOPTIMIZED=1 yarn build && next export
+
+      - name: Show build output
+        run: ls -al
+
+      # 步骤 5：部署到云服务器
+      - name: Deploy to server
+        uses: easingthemes/ssh-deploy@v4
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          SOURCE: 'out/' # 构建输出的目录，替换为你的输出目录
+          TARGET: ${{ secrets.TARGET_PATH }} # 服务器上的目标路径
+          ARGS: '-avzr --delete' # rsync 参数，同步文件并删除目标目录中多余的文件
