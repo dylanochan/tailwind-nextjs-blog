@@ -10032,6 +10032,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-rough-notation@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "react-rough-notation@npm:1.0.5"
+  dependencies:
+    rough-notation: ^0.5.1
+  peerDependencies:
+    react: ^18.2.0
+    react-dom: ^18.2.0
+  checksum: 8d05cb577dc69db8faf1304e4b4bd9ac31ea3cdcfea645677134c57e0d35995e2bfae80f89a2700588e20dae57de93f4318475043c1b03f60a420b8ea1aa522a
+  languageName: node
+  linkType: hard
+
 "react-virtual@npm:^2.8.2":
   version: 2.10.4
   resolution: "react-virtual@npm:2.10.4"
@@ -10909,6 +10921,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rough-notation@npm:^0.5.1":
+  version: 0.5.1
+  resolution: "rough-notation@npm:0.5.1"
+  checksum: e7aacbd0b9751b4c5a377198dfd81eab8ad4c339bccc547e7439ce86c379113cea857fa56ef0f4beac41e316efc1888d127a8e7248b1431f41cd45092893166e
+  languageName: node
+  linkType: hard
+
 "run-parallel@npm:^1.1.9":
   version: 1.2.0
   resolution: "run-parallel@npm:1.2.0"
@@ -11682,6 +11701,7 @@ __metadata:
     prettier-plugin-tailwindcss: ^0.6.11
     react: 19.0.0
     react-dom: 19.0.0
+    react-rough-notation: ^1.0.5
     reading-time: 1.5.0
     rehype-autolink-headings: ^7.1.0
     rehype-citation: ^2.3.0
