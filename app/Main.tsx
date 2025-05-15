@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const MAX_DISPLAY = 5
 
-export default function Home({ posts }: { posts: Blog[] }) {
+export default function Home({ posts }) {
   const scrollRef = useRef(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(posts.length > 1)
