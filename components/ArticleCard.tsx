@@ -8,7 +8,7 @@ import Tag from '@/components/Tag'
 import { formatDate } from 'pliny/utils/formatDate'
 import siteMetadata from '@/data/siteMetadata'
 const Card = ({ blog }: { blog: Blog }) => {
-  const href: string = blog.images[0] || '/static/images/logo.png'
+  const href: string = blog.images?.[0] || '/static/images/logo.png'
   const [isHovered, setIsHovered] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -56,7 +56,7 @@ const Card = ({ blog }: { blog: Blog }) => {
                 <Image
                   alt={blog.title}
                   src={href}
-                  className="object-cover object-center sm:h-24 md:h-48 lg:h-64"
+                  className="object-contain object-center sm:h-24 md:h-48 lg:h-64"
                   width={544}
                   height={306}
                 />
@@ -65,7 +65,7 @@ const Card = ({ blog }: { blog: Blog }) => {
               <Image
                 alt={blog.title}
                 src={href}
-                className="object-cover object-center sm:h-24 md:h-48 lg:h-64"
+                className="object-contain object-center sm:h-24 md:h-48 lg:h-64"
                 width={544}
                 height={306}
               />

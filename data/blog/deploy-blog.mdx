@@ -1,0 +1,195 @@
+---
+title: '博客上线'
+date: '2025-05-16'
+tags: ['blog', 'tailwind-nextjs-blog', 'react', 'Github Actions']
+draft: false
+images: ['/static/images/deployBlog/deploy-blog-flowchart.png']
+summary: 以前的博客用的 Hugo构建的，但是一直也没更新。最近看到 Tailwind Nextjs Starter Blog，界面挺简洁的，所以不如重新推翻，顺便配置一下 Github Actions 自动部署。
+---
+
+## 博客系统
+
+基于 md 的静态博客系统现在也挺多的。我之前了解到的就有以下几个，功能其实都差不多。可以点进去看看线上的 demo 哪个合眼缘用哪个就行了，还有很多大神修改过的博客主题做的非常好。
+
+- [Hugo](https://gohugo.io/)
+- [Jekyll](https://jekyllrb.com/)
+- [Hexo](https://hexo.io/)
+
+我之前也部署过一个基于 [Hugo 的博客](https://github.com/dylanochan/hugo-theme-cactus)，但是那时候也没有用什么自动部署，每次写完文章都要手动编译，然后上传到服务器。
+虽然好像不是很麻烦，但是每次写文章都会有一定的心理负担，久而久之就废弃了。最近又看到之前看的一些博主把博客系统换成了 [`Tailwind Nextjs Starter Blog`](https://github.com/timlrx/tailwind-nextjs-starter-blog)，
+从名字就能看出来，这个博客主题基于 Nextjs，并且使用 Tailwind CSS 构建，那这不就是熟悉的前端框架吗？虽然我不会 React，但是理解起来应该不难。而之前的 Hugo 博客是基于 go 语言构建的，然后布局用的是一种模板语言，我记得当时为了修改博客主题还去学了一下，显然用起来还是有一定成本的。
+所以，我决定把博客系统换成了 Nextjs，为了最大限度减少写文章之外的任何工作，准备使用 Github Actions 自动部署。
+
+## 博客主题
+
+[`Tailwind Nextjs Starter Blog`](https://github.com/timlrx/tailwind-nextjs-starter-blog) 的仓库收纳了一些魔改过的主题，
+我打算选择的是一个韩国博主改的[Min71 Dev Blog](https://min71.dev/)。
+
+![](/static/images/deployBlog/mini71-ui.png)
+
+是不是看起来还不错？我直接找到源仓库，然后 fork 了一下，node也是早就有的，`yarn start`成功运行，然后把原作者的信息改成自己的了，准备迅速先上线。
+一切都很顺利，结果发现了一个大问题，这个博客在 Windows 下打包会出现问题：
+
+```
+D:\document\project\blog git:[main]
+yarn build
+Warning: Contentlayer might not work as expected on Windows
+successCallback D:/document/project/blog/.contentlayer
+onSuccess
+SuccessCallbackError {
+  error: Error: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'd:'
+      at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:249:11)
+      at defaultLoad (node:internal/modules/esm/load:130:3)
+      at ModuleLoader.load (node:internal/modules/esm/loader:553:13)
+      at ModuleLoader.moduleProvider (node:internal/modules/esm/loader:434:56)
+      at new ModuleJob (node:internal/modules/esm/module_job:71:27)
+      at ModuleLoader.#createModuleJob (node:internal/modules/esm/loader:447:17)
+      at ModuleLoader.getJobFromResolveResult (node:internal/modules/esm/loader:259:34)
+      at ModuleLoader.getModuleJob (node:internal/modules/esm/loader:240:17)
+      at ModuleLoader.import (node:internal/modules/esm/loader:472:23) {
+    code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+  },
+  _tag: 'SuccessCallbackError',
+  toString: [Function (anonymous)],
+  [Symbol()]: {
+    error: Error: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'd:'
+        at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:249:11)
+        at defaultLoad (node:internal/modules/esm/load:130:3)
+        at ModuleLoader.load (node:internal/modules/esm/loader:553:13)
+        at ModuleLoader.moduleProvider (node:internal/modules/esm/loader:434:56)
+        at new ModuleJob (node:internal/modules/esm/module_job:71:27)
+        at ModuleLoader.#createModuleJob (node:internal/modules/esm/loader:447:17)
+        at ModuleLoader.getJobFromResolveResult (node:internal/modules/esm/loader:259:34)
+        at ModuleLoader.getModuleJob (node:internal/modules/esm/loader:240:17)
+        at ModuleLoader.import (node:internal/modules/esm/loader:472:23) {
+      code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+    }
+  },
+  [Symbol()]: [ 'error' ]
+}
+   Creating an optimized production build  .
+```
+
+应该是一些 Windows 下的路径问题，但是这个问题在官方现在的版本却没有；可能这个作者基于原来的版本太老了。
+这就让我想到是不是还会有其他的问题了，而且我一旦用了这个主题，那么官方版本的更新也跟进不了了。
+所以我决定把博客主题换回原来的主题，然后自己修改，至于怎么修改的下一篇再说吧。
+
+## 部署
+
+为了避免繁琐的工作，我决定使用 Github Actions 自动部署。
+大概的流程是这样：
+
+1. 提交代码到 Github
+2. Github Actions 自动将博客编译成静态文件，然后传送到我的云服务器上。
+3. 云服务器上配置了 Nginx 提供网站访问。
+   ![](/static/images/deployBlog/deploy-blog-flowchart.png)
+
+为了能通过 Github Actions 传送文件到云服务器，云服务器需要配置好 SSH 访问，这个密钥对需要保存在 GitHub 的 Secrets 中，然后 Github Actions 就能传送文件到云服务器了。
+
+### 配置 SSH 访问
+
+在本地生成 SSH 密钥对（如果尚未生成）：
+
+```bash
+
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+```
+
+私钥保存在 ~/.ssh/id_rsa，公钥在 ~/.ssh/id_rsa.pub。
+
+### 将公钥添加到云服务器的 ~/.ssh/authorized_keys 文件中：
+
+```bash
+ssh-copy-id -i ~/.ssh/id_rsa.pub user@your_server_ip
+```
+
+或者手动将公钥内容追加到服务器的 ~/.ssh/authorized_keys。
+
+### 配置 GitHub Actions
+
+然后就可以配置 Github Actions 了,我的配置如下：
+
+```yaml
+name: Build and Deploy Yarn Project
+
+# 触发条件：当代码推送到 main 分支时触发
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # 支持手动触发
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 虚拟机
+
+    steps:
+      # 步骤 1：检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 步骤 2：设置 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # 根据项目需要选择 Node.js 版本
+          cache: 'yarn' # 缓存 Yarn 依赖以加速构建
+
+      # 步骤 3：安装 Yarn 依赖
+      - name: Install dependencies
+        run: yarn install
+
+      # 步骤 4：构建项目
+      - name: Build static site
+        run: EXPORT=1 UNOPTIMIZED=1 yarn build
+
+      # 步骤 5：部署到云服务器
+      - name: Deploy to server
+        uses: easingthemes/ssh-deploy@v4
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          SOURCE: 'out/' # 构建输出的目录，替换为你的输出目录
+          TARGET: ${{ secrets.TARGET_PATH }} # 服务器上的目标路径
+          ARGS: '-avzr --delete' # rsync 参数，同步文件并删除目标目录中多余的文件
+```
+
+添加好GitHub Actions,还需要配置这几个secrets（仓库设置 > Secrets and variables > Actions > New repository secret）
+
+- `SSH_PRIVATE_KEY`：云服务器 SSH 私钥内容（id_rsa 文件内容）。 **此处注意在把私钥复制进Github的时候要在末尾多加一个空行，否则会报错文件传送不了**
+
+- `REMOTE_HOST`：云服务器的 IP 地址或域名。
+
+- `REMOTE_USER`：服务器的用户名（如 root 或其他用户）。
+
+- `TARGET_PATH`：服务器上部署项目的目标路径（即之后 Nginx 的代理路径）。
+
+准备妥当之后可以将代码推送到GitHub（建议推送代码之前格式化一下 `npx prettier --write .` ），看看 Actions 是否能成功执行。然后云服务的路径有打包好了的静态资源那就大功告成了。
+
+### 配置 Nginx 代理
+
+```
+server {
+        listen 443 ssl;
+        server_name example.com www.example.com;
+        # SSL 证书路径（你需要换成你自己的）
+        ssl_certificate /var/www/ssl/example.com.pem;
+        ssl_certificate_key /var/www/ssl/example.com.key;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        # 项目目录（Next.js 导出的 out 目录）
+        root /var/www/blog;
+        index index.html index.htm;
+        location / {
+                try_files $uri $uri/ /index.html;
+        }
+        # 缓存静态资源
+        # gzip（可选，提升性能）
+        gzip on;
+        gzip_types text/plain text/css application/javascript application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+}
+```
+
+成功上线！

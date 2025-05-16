@@ -103,7 +103,6 @@ export default function Home({ posts }) {
           >
             {!posts.length && 'No posts found.'}
             {posts.slice(0, MAX_DISPLAY).map((post) => {
-              post.images = ['/static/images/logo.png']
               return <ArticleCard blog={post} key={post.slug} />
             })}
           </div>
