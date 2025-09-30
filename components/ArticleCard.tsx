@@ -52,7 +52,7 @@ const Card = ({ blog }: { blog: Blog }) => {
         <div className="flex h-full flex-col overflow-hidden rounded-md bg-gray-200/20 p-4 shadow-md backdrop-blur-lg transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl supports-[not(backdrop-filter)]:bg-gray-300/20 dark:bg-gray-800/40 dark:shadow-gray-900/50 dark:supports-[not(backdrop-filter)]:bg-gray-700/50">
           {href &&
             (href ? (
-              <Link href={blog.title} aria-label={`Link to ${blog.title}`}>
+              <Link href={`/blog/${blog.slug}`} aria-label={`Link to ${blog.title}`}>
                 <Image
                   alt={blog.title}
                   src={href}
