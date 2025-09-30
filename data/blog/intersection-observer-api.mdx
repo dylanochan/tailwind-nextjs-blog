@@ -1,0 +1,104 @@
+---
+title: 'Intersection Observer API'
+date: '2025-09-30'
+tags: ['Intersection Observer API', 'Echarts']
+draft: true
+images: []
+summary: 为了让弹窗中 Echarts 图表在打开时重新适应盒子大小，发现了 Intersection Observer API 这个 API 可以监听元素是否出现在可视区域。
+---
+
+问题是这样的，在一个弹窗中，有一个 Echarts 图表，并且绑定了一个 resize：
+``` javascript
+window.addEventListener('resize', async function () {
+				await chartSize(outerRef.value, document.getElementById(props.chartId))
+				chartRef.value.resize()
+				updateChartOption()
+			})
+```
+在弹窗打开的时候，弹窗中的图表会自动重新适应盒子大小正常工作；但是当弹窗关闭时，如果页面发生了 resize，由于弹窗未打开，盒子的大小是不确定的，那么图表的resize也是错误的。
+则需要在弹窗打开的时候也重新调用一下图表的resize方法。但是这种方式就和弹窗的状态绑定，不够解耦。使用 Intersection Observer API 是一个非常好用的解决方式。
+
+> IntersectionObserver 接口（从属于 Intersection Observer API）提供了一种异步观察目标元素与其祖先元素或顶级文档视口（viewport）交叉状态的方法。其祖先元素或视口被称为根（root）。
+
+> 当一个 IntersectionObserver 对象被创建时，其被配置为监听根中一段给定比例的可见区域。一旦 IntersectionObserver 被创建，则无法更改其配置，所以一个给定的观察者对象只能用来监听可见区域的特定变化值；然而，你可以在同一个观察者对象中配置监听多个目标元素。
+
+这个接口官方说明其实是检测目标元素与上级元素的重合率，但是当你把上级元素设置为 null（即默认的顶级文档视口）的时候，就能达到检测这个元素出现在可视区域的比率的效果。
+
+> 注意，IE不支持，不过应该影响不大吧 😌😌
+
+## 使用方法
+
+```javascript
+const intersectionObserver  = new IntersectionObserver(callback, options);
+```
+callback:
+   - entries：一个数组，包含所有可见元素。
+   - observer：当前 IntersectionObserver 对象。
+
+options:
+   - root：指定根元素，默认为 null，表示使用顶级文档视口。
+   - rootMargin：指定根元素的边框，默认为 0px 0px 0px 0px。
+   - threshold：指定可见比例，默认为 0。
+
+代码示例：
+```javascript
+const handleIntersection = async (entries, observer) => {
+		for (const entry of entries) {
+			if (entry.isIntersecting) {
+				await nextTick()
+				await chartSize(outerRef.value, document.getElementById(props.chartId))
+				chartRef.value.clear()
+				chartRef.value.resize()
+				updateChartOption()
+			}
+		}
+	}
+	const observeElement = (el) => {
+		const options = {
+			root: null, // 使用 viewport 作为根元素
+			rootMargin: '0px', // 无额外的边距
+			threshold: 0.1 // 当元素至少有 10% 进入视图时触发
+		}
+		const observer = new IntersectionObserver(handleIntersection, options)
+		if (el) {
+			observer.observe(el)
+		}
+		return () => {
+			if (el) {
+				observer.unobserve(el)
+			}
+		}
+	}
+```
+## 主要用途
+这个 API 的用途还挺多的：
+### 1. 无限滚动
+之前实现滚动监听的方式主要是监听滚动事件，但是这样会存在一定的性能问题，因为每次滚动都会触发一次事件，导致页面性能下降，并且还需要手动计算各种滚动位置还有高度。
+用这个Api就很方便了，只需要在页面最下面的元素绑定一个交叉监听即可，滑动到最下面就加载更多的数据即可。
+```javascript
+const intersectionObserver = new IntersectionObserver((entries) => {
+// 如果 intersectionRatio 为 0，则目标在视野外，
+// 我们不需要做任何事情。
+if (entries[0].intersectionRatio <= 0) return;
+
+loadItems(10);
+console.log("Loaded new items");
+});
+// 开始监听
+intersectionObserver.observe(document.querySelector(".scrollerFooter"));
+```
+### 2. 图片懒加载
+这个 API 可以实现图片懒加载，当图片出现在可视区域时，才加载图片。
+```javascript
+const intersectionObserver = new IntersectionObserver((entries) => {
+    if (item.isIntersecting)  {
+        loadImage(image);
+    }
+})
+// 监听图片元素
+intersectionObserver.observe(image);
+```
+
+## 其他类似的API
+1. [MutationObserver](https://developer.mozilla.org/zh-CN/docs/Web/API/MutationObserver)：MutationObserver 接口允许开发者观察DOM树对某个元素或子元素的变化。
+2. [ResizeObserver](https://developer.mozilla.org/zh-CN/docs/Web/API/ResizeObserver)：ResizeObserver 接口允许开发者观察目标元素或根元素尺寸的变化。
